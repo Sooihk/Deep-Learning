@@ -1,0 +1,122 @@
+% This must be in the first 5 lines to tell arXiv to use pdfLaTeX, which is strongly recommended.
+\pdfoutput=1
+% In particular, the hyperref package requires pdfLaTeX in order to break URLs across lines.
+
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+
+% Remove the "review" option to generate the final version.
+\usepackage{ACL2023}
+
+% Standard package includes
+\usepackage{times}
+\usepackage{latexsym}
+
+% For proper rendering and hyphenation of words containing Latin characters (including in bib files)
+\usepackage[T1]{fontenc}
+% For Vietnamese characters
+% \usepackage[T5]{fontenc}
+% See https://www.latex-project.org/help/documentation/encguide.pdf for other character sets
+
+% This assumes your files are encoded as UTF8
+\usepackage[utf8]{inputenc}
+
+% This is not strictly necessary, and may be commented out.
+% However, it will improve the layout of the manuscript,
+% and will typically save some space.
+\usepackage{microtype}
+
+% This is also not strictly necessary, and may be commented out.
+% However, it will improve the aesthetics of text in
+% the typewriter font.
+\usepackage{inconsolata}
+
+% Include the listings package for code listings
+\usepackage{listings}
+
+% Optional: Include the color package if you want to add color to your listings
+\usepackage{xcolor}
+
+% Configure the listings package
+\lstset{
+  basicstyle=\ttfamily\scriptsize, % Set the basic style to small typewriter font
+  breaklines=true,                  % Set automatic line breaking
+  breakatwhitespace=false,          % Set line breaking only at whitespace
+  showstringspaces=false,           % Don't show spaces in strings as special characters
+  frame=single,                     % Frame the code 
+  numberstyle=\tiny,                % Small line numbers
+  tabsize=2                         % Set tab size
+}
+
+
+% If the title and author information does not fit in the area allocated, uncomment the following
+%
+%\setlength\titlebox{<dim>}
+%
+% and set <dim> to something 5cm or larger.
+
+\title{Skip Connections for DAGGER Reinforcement Learning}
+
+% Author information can be set in various styles:
+% For several authors from the same institution:
+% \author{Author 1 \and ... \and Author n \\
+%         Address line \\ ... \\ Address line}
+% if the names do not fit well on one line use
+%         Author 1 \\ {\bf Author 2} \\ ... \\ {\bf Author n} \\
+% For authors from different institutions:
+% \author{Author 1 \\ Address line \\  ... \\ Address line
+%         \And  ... \And
+%         Author n \\ Address line \\ ... \\ Address line}
+% To start a seperate ``row'' of authors use \AND, as in
+% \author{Author 1 \\ Address line \\  ... \\ Address line
+%         \AND
+%         Author 2 \\ Address line \\ ... \\ Address line \And
+%         Author 3 \\ Address line \\ ... \\ Address line}
+
+\author{Azadeh Khoddami, Abelardo Riojas, Sooihk Ro, Reese Williamson \\
+  The University of Texas at Austin}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+The goal of this project is to produce a state-based agent which consistently wins against opponents in 2v2 Ice Hockey matches played inside of the game SuperTuxKart. To accomplish this, we employ a three fold tactic:
+
+\begin{itemize}
+    \item Imitation learning off of an expert agent, \texttt{jurgen\_agent}, provided by the TAs.
+    \item Additional training of our state agent after it has learned to behave like \texttt{jurgen\_agent}, using principles from the DAGGER training framework.
+    \item Use of Residual Blocks (ResNets) in the architecture of the state agent to improve the flow of gradient signals to the model during backpropgation and potentially capture more complex relationships between the input features.
+\end{itemize}
+
+While existing research is out there on the use of ResNets for image based reinforcement learning \cite{DBLP:journals/corr/abs-2107-03380}, our challenge is unique in the sense that we are using residual skip connections for a state space of 11 features.
+
+Our state space consists of 11 features which come from the states of the karts on \texttt{team1}, and the state of the soccer match (most importantly the position of the puck). Our implementation avoids using the state of the opponents' karts as empirical evidence shows that \texttt{jurgen\_agent} has the highest win rate amongst all other agents, including \texttt{yann\_agent} which uses the opponent's state.
+
+\textbf{TODO: plot of win rates for each agent against all other agent types to support this statement}
+
+\textbf{TODO: see if using the 7 jurgen features outperform the 11 yann agent features}
+
+
+\section{Methods}
+
+\subsection{Gathering data}
+
+The first step in our approach is to gather a large training set of trajectories taken by \texttt{jurgen\_agent} against various opponents, including a dummy opponent which only accelerates forwards, for imitation learning.
+
+In total we collected 120 trajectories of \texttt{jurgen} playing against \texttt{jurgen}, \texttt{image\_jurgen}, \texttt{yann}, \texttt{yoshua}, \texttt{geoffery}, and \texttt{dummy}.
+
+Matches can be initialized with a starting location and velocity for the puck, which was done randomly for each of the 120 runs we collected to ensure diversity in the training set.
+
+This random initialization can only be done for the first match in a set, so all sets were best-of-one matches. We also only included matches in which \texttt{jurgen} actually won with a score of 1-0.
+
+In addition, through looking at videos of matches we collected, we saw that there were saved matches where the random initialization was extremely in favor of \texttt{jurgen}, i.e the game starts and the puck launches itself into or close to the net. Those matches were also pruned from our training set.
+
+Our ideal match consists of a long-and-hard battle for which agents on either side do not get stuck or give up, and that \texttt{jurgen} ultimately wins.
+
+\bibliography{references}
+\bibliographystyle{acl_natbib}
+
+
+
+\end{document}
